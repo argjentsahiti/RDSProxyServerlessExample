@@ -1,0 +1,55 @@
+service: testrdsproxy
+
+frameworkVersion: '2 || 3'
+
+plugins:
+  - serverless-pseudo-parameters
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: 'eu-west-1'
+  stage: 'dev'
+  lambdaHashingVersion: 20201221
+  iam:
+    role:
+      statements:
+          - Effect: 'Allow'
+            Resource: '*'
+            Action: 
+              - 'lambda:*'
+  vpc:
+    securityGroupIds:
+      - !Ref LambdaSecurityGroup
+    subnetIds:
+      - !Ref SubnetAPrivate
+      - !Ref SubnetBPrivate
+  environment:
+    DB_HOST: !GetAtt
+      - RDSProxy
+      - Endpoint
+    DB_USERNAME: 'admin'
+    DB_PASSWORD: 'password'
+    DB_PORT: 3306
+    DB_NAME: 'testdb'
+    CONNECTION_ACQUIRE_TIME: 20
+
+custom:
+  VPC_CIDR: 10
+
+functions:
+  hello2:
+    handler: handler.hello
+    timeout: 30
+  hello3:
+    handler: handler.testLambdaInvoke
+    timeout: 30
+  hello4:
+    handler: handler.testAxios
+    timeout: 30
+
+resources:
+  - ${file(resources/vpcresources.yml)}
+  - ${file(resources/securitygroups.yml)}
+  - ${file(resources/routingresources.yml)}
+  - ${file(resources/rdsproxy.yml)}

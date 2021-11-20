@@ -1,0 +1,74 @@
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock: 10.0.0.0/16
+
+  SubnetAPublic:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: ${self:provider.region}a
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: "Name"
+          Value: "SubnetAPublic"
+
+  SubnetAPrivate:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: ${self:provider.region}a
+      CidrBlock: 10.0.2.0/24
+      Tags:
+        - Key: "Name"
+          Value: "SubnetAPrivate"
+
+  SubnetBPrivate:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: ${self:provider.region}b
+      CidrBlock: 10.0.3.0/24
+      Tags:
+        - Key: "Name"
+          Value: "SubnetBPrivate"
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: "InternetGateway"
+  VPCGA:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: VPC
+    Properties:
+      Domain: vpc
+  
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt EIP.AllocationId
+      SubnetId: !Ref SubnetAPublic
+
+Outputs:
+  VPCId:
+    Value: !Ref VPC
+  PublicIpAddress:
+    Value: !Ref EIP
+  SubnetAPublicId:
+    Value: !Ref SubnetAPublic
+  SubnetAPrivateId:
+    Value: !Ref SubnetAPrivate
+  SubnetBPrivateId:
+    Value: !Ref SubnetBPrivate

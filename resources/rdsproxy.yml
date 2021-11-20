@@ -1,0 +1,66 @@
+Resources:
+  RDSProxy:
+    Type: AWS::RDS::DBProxy
+    Properties:
+      DebugLogging: true
+      DBProxyName: 'test-proxy'
+      EngineFamily: MYSQL
+      IdleClientTimeout: 120
+      RequireTLS: TRUE
+      RoleArn: !GetAtt RDSProxyRole.Arn
+      Auth:
+        - AuthScheme: SECRETS
+          SecretArn: 'arn:aws:secretsmanager:eu-west-1:356234648703:secret:dev/db-g9EYZ6'
+          IAMAuth: DISABLED
+      VpcSecurityGroupIds:
+        - !Ref RDSProxySecurityGroup
+      VpcSubnetIds:
+        - !Ref SubnetAPrivate
+        - !Ref SubnetBPrivate
+
+  RDSProxyTargetGroup:
+    Type: AWS::RDS::DBProxyTargetGroup
+    Properties:
+      DBProxyName: !Ref RDSProxy
+      DBInstanceIdentifiers:
+        - test-proxy-rds
+      TargetGroupName: default
+
+  RDSProxyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: "rds.amazonaws.com"
+      Policies:
+        - PolicyName: RDSProxyPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "secretsmanager:GetSecretValue"
+                Resource: 'arn:aws:secretsmanager:eu-west-1:356234648703:secret:dev/db-g9EYZ6'
+              - Effect: Allow
+                Action: "kms:Decrypt"
+                Resource: "arn:aws:kms:${self:provider.region}:#{AWS::AccountId}:key/*"
+                Condition:
+                  StringEquals:
+                    kms:ViaService: "secretsmanager.${self:provider.region}.amazonaws.com"
+Outputs:
+  RDSProxyName:
+    Value:
+      Ref: RDSProxy
+  RDSProxyEndpoint:
+    Value: !GetAtt
+      - RDSProxy
+      - Endpoint
+  RDSProxyArn:
+    Value: !GetAtt
+      - RDSProxy
+      - DBProxyArn
+  RDSProxyTargetGroupArn:
+    Value: !Ref RDSProxyTargetGroup

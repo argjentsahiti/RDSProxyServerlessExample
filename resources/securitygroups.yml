@@ -1,0 +1,26 @@
+Resources:
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: "Security group for Lambdas"
+      GroupName: "Lambda"
+      SecurityGroupIngress:
+        - IpProtocol : "-1"
+          CidrIp : "0.0.0.0/0"
+  RDSProxySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: "Security group for RDS Proxy"
+      GroupName: "RDS Proxy"
+      SecurityGroupIngress:
+        - IpProtocol : "-1"
+          CidrIp : "0.0.0.0/0"
+
+Outputs:
+  LambdaSecurityGroupId:
+    Value: !Ref LambdaSecurityGroup
+  RDSProxySecurityGroupId:
+    Value: !Ref RDSProxySecurityGroup
+  
